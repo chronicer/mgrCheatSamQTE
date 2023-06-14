@@ -58,7 +58,11 @@ namespace cheat
 	void ChangePlayerOnce() noexcept;
 	void EnableSamInCapmaign() noexcept;
 	void ChangeBossHP(int bossHP) noexcept;
-	
+
+	int hex_to_int(const std::string& str);
+	//void LoadStyleSwitcher();
+
+	void changeModelID() noexcept;
 	//mission change
 	void ChangeMission(unsigned int phaseId, static const char* phaseName, bool isDLCPhase) noexcept;
 
