@@ -64,6 +64,7 @@ unsigned int RaidenQTEActions = shared::base + 0x6C0A70;						//For slider and f
 
 /*************************** FOR FIX MISTRAL AND SUNDOWNER SLIDER ***************************/
 
+unsigned int FixMistralAndSliderAddress0 = shared::base + 0xB7DA3; //fix Blade Wolf mini QTE (mission 1)
 unsigned int FixMistralAndSliderAddress1 = shared::base + 0x95B878;
 unsigned int FixMistralAndSliderAddress2 = shared::base + 0x96DCF3;
 unsigned int FixMistralAndSliderAddress3 = shared::base + 0x192407;
@@ -81,8 +82,62 @@ std::string nums1[MAX_LINES]; // массив для первых чисел
 std::string nums2[MAX_LINES]; // массив для вторых чисел
 int oldModelId = -1;
 int oldPlayer = false;
-/*************************** SAM IN RAIDEN CAMPAIGN END***************************/
+/*************************** SAM IN RAIDEN CAMPAIGN END ***************************/
 
+
+/*************************** ALL MODELS ADDRESSES ***************************/
+static const unsigned int ModelAdresses[14][5] =
+{
+	//model    hair      head      sheath    visor
+	{0x14A9828,0x14A982C,0x14A9838,0x14A9834,0x14A9830}, //0 - standart
+	{0x14A983C,0x14A9840,0x14A984C,0x14A9848,0x14A9844}, // 1 - blue
+	{0x14A9850,0x14A9854,0x14A9860,0x14A985C,0x14A9858}, // 2 - red
+	{0x14A9864,0x14A9868,0x14A9874,0x14A9870,0x14A986C}, // 3 - yellow
+	{0x14A9878,0x14A987C,0x14A9888,0x14A9884,0x14A9880}, // 4 - Desperado
+	{0x14A988C,0x14A9890,0x14A989C,0x14A9898,0x14A9894}, // 5 - Costume
+	{0x14A98A0,0x14A98A4,0x14A98B0,0x14A98AC,0x14A98A8}, // 6 - Mariachi
+	
+	{0x14A98B4,0x14A98B8,0x14A98C4,0x14A98C0,0x14A98BC}, // 7 - Prologue
+	{0x14A98C8,0x14A98CC,0x14A98D8,0x14A98D4,0x14A98D0}, // 8 - Original
+	{0x14A98DC,0x14A98E0,0x14A98EC,0x14A98E8,0x14A98E4}, // 9 - Gray Fox unk?
+	{0x14A98F0,0x14A98F4,0x14A9900,0x14A98FC,0x14A98F8}, // 10 - White unk?
+	{0x14A9904,0x14A9908,0x14A9914,0x14A9910,0x14A990C}, // 11 - Inferno unk?
+	
+	{0x14A9918,0x14A991C,0x14A9920,0x14A9924,0x14A9928}, // 12 - Commandos
+
+
+	{0x14A992C,0x14A9930,0x14A993C,0x14A9938,0x14A9934} // Monsoon & Armstrong if standart
+	//model    hair      head      sheath    visor
+};
+/*************************** ALL MODELS ADDRESSES END ***************************/
+
+unsigned int SamModelIds[5] = {0x11406,0x11401,0x11405,0x11404,0x11402};
+
+/*************************** ALL RAIDEN MODELS ID ***************************/
+
+static const unsigned int RaidenModelIDs[14][5] =
+{
+	//model     hair       head       sheath     visor
+	{0x00011010,0x00011011,0x00011017,0x00011013,0x00011014}, //0 - standart
+	{0x00011030,0x00011031,0x00011037,0x00011013,0x00011014}, // 1 - blue
+	{0x00011040,0x00011041,0x00011047,0x00011013,0x00011014}, // 2 - red
+	{0x00011050,0x00011051,0x00011057,0x00011013,0x00011014}, // 3 - yellow
+	{0x00011080,0x00011081,0x00011087,0x00011083,0x00011084}, // 4 - Desperado
+	{0x00011070,0x00011071,0x00011077,0x00011013,0xFFFFFFFF}, // 5 - Costume
+	{0x00011060,0x00011061,0x00011067,0x00011013,0x00011014}, // 6 - Mariachi
+
+	{0x00010100,0x00010101,0x00010106,0x00011013,0x00010104}, // 7 - Prologue
+	{0x000110A0,0x000110A1,0x000110A7,0x00011013,0x000110A4}, // 8 - Original
+	{0x00011300,0xFFFFFFFF,0xFFFFFFFF,0x00011013,0xFFFFFFFF}, // 9 - Gray Fox
+	{0x00011200,0x00011201,0x00011207,0x00011013,0x00011014}, // 10 - White
+	{0x00011220,0x00011221,0x00011227,0x00011013,0x00011014}, // 11 - Inferno
+
+	{0x00011210,0x00011211,0x00011014,0x00011013,0x00011217}, // 12 - Commandos
+	{0x00011090,0x00011091,0x00011097,0x00011013,0x00011014} // Monsoon & Armstrong if standart
+	//model		hair	   head		  sheath     visor
+};
+
+/*************************** ALL RAIDEN MODELS ID END***************************/
 
 unsigned int ModelId = 0x0;
 unsigned int HairId = 0x0;
@@ -513,6 +568,7 @@ void cheat::ChangePlayerOnce() noexcept
 		injector::WriteMemory<int>(shared::base + 0x7B9E6D, 379, true); //fix Raiden blademode (air)
 
 		//Fix Mistral and Sundowner slider event
+		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress0, shared::base + 0x1735B20, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress1, shared::base + 0x1735B20, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress2, shared::base + 0x1735B20, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress3, shared::base + 0x1735B20, true);
@@ -578,6 +634,7 @@ void cheat::ChangePlayerOnce() noexcept
 		injector::WriteMemory<int>(shared::base + 0x7B9E6D, 288, true); //fix Raiden blademode (air)
 
 		//Fix Mistral and Sundowner slider event
+		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress0, shared::base + 0x17E9DB8, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress1, shared::base + 0x17E9DB8, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress2, shared::base + 0x17E9DB8, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress3, shared::base + 0x17E9DB8, true);
@@ -609,6 +666,7 @@ void cheat::EnableSamInCapmaign() noexcept
 {
 	if (oldPlayer != PlayerIsSam) {
 		cheat::ChangePlayerOnce();
+		cheat::changeModelID();
 		oldPlayer = PlayerIsSam;
 	}
 	
@@ -626,9 +684,10 @@ void cheat::EnableSamInCapmaign() noexcept
 
 	if (PlayerIsSam) {
 		int currentModelID = injector::ReadMemory<int>(shared::base + 0x17E9FB4, true);
+		
 		if (currentModelID != oldModelId) {
-			cheat::changeModelID();
-			oldModelId = currentModelID;
+			//cheat::changeModelID();
+			//oldModelId = currentModelID;
 		}
 
 		injector::WriteMemory<byte>(shared::base + 0x93B13C, skill, true);
@@ -682,13 +741,14 @@ void cheat::EnableSamInCapmaign() noexcept
 
 			/******************** FIX STANDING HERE *****************************/
 			injector::WriteMemory<unsigned int>(shared::base + 0x129EDE0,
-				(CurrentPhase == 0x740 || CurrentPhase == 0xA15 || CurrentPhase == 0x138 || CurrentPhase == 0xA50) ? shared::base + 0x6C0B00 : shared::base + 0x6C3920, true);
+				(CurrentPhase == 0x740 || CurrentPhase == 0x470 ||  CurrentPhase == 0xA15 || CurrentPhase == 0x138 || CurrentPhase == 0xA50) ? shared::base + 0x6C0B00 : shared::base + 0x6C3920, true);
 			/******************** FIX STANDING HERE *****************************/
 
 			/******************** FIX MISTRAL *****************************/
 			injector::WriteMemory<unsigned int>(shared::base + 0x129EBD0,
 				(CurrentPhase == 0x170 || CurrentPhase == 0xA15 || CurrentPhase == 0xA50 || CurrentPhase == 0x138
-					|| CurrentPhase == 0x150
+					|| CurrentPhase == 0x150 || Phase.m_nCurrentPhaseHash == stringhash32("P330_3RD")
+					|| CurrentPhase == 0x470
 					) ? shared::base + 0x78C900 : shared::base + 0x45CCA0, true);
 			/******************** FIX MISTRAL *****************************/
 			if (Trigger::GameFlags.GAME_ENABLE_INFINITE_RIPPER_MODE)
@@ -716,52 +776,26 @@ void cheat::EnableSamInCapmaign() noexcept
 				player->m_nCurrentAction = 0x00100000;
 				player->m_nCurrentActionId = 1;
 			}
-			
 
-			if (PlayerAction == 205 || PlayerAction == 206) player->m_nCurrentAction = 0x00100055;
-
-			if (
-				((EventTrigger &&
-					((CurrentPhase == 0x380 && BossAction != 393219) || CurrentPhase == 0xA15 || CurrentPhase == 0x720
-						|| CurrentPhase == 0x02D0 || CurrentPhase == 0x520 || CurrentPhase == 0x420 || CurrentPhase == 0x310
-						|| CurrentPhase == 0xA50
-						|| Phase.m_nCurrentPhaseHash == stringhash32("P150_HELI")
-						)
-					) //&& MonsoonBossAction!=393219 or ==65557
-					|| (Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
-						|| Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE
-						|| Trigger::StaFlags.STA_NINJARUN
-						//|| Trigger::StaFlags.STA_QTE
-						|| Trigger::GameFlags.GAME_KOGEKKO_PLAY
-						))
-				&& (PlayerAction >= 0x00100000 && (PlayerAction != 205 && PlayerAction != 206) && player->m_nBladeModeType==0)
+			if ((EventTrigger && player->field_3458 && BossAction!=393219)
+				 
+				||(Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
+				|| Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE
+				|| Trigger::StaFlags.STA_NINJARUN
+				|| Trigger::GameFlags.GAME_KOGEKKO_PLAY)
+				
+				&& (PlayerAction >= 0x00100000)
 				) {
 					player->m_nCurrentAction = 0;
 					player->m_nCurrentActionId = 1;
-			}
-			else if ((PlayerAction == 0 && CurrentPhase != 0x720 
-				&& CurrentPhase!=0x520 && CurrentPhase!=0x380 
-				&& CurrentPhase != 0x430 && CurrentPhase != 0x02D0 
-				&& CurrentPhase != 0xA15 
-				&& CurrentPhase != 0x310
-				&& CurrentPhase != 0x138
-				&& CurrentPhase != 0xA50
-				&& Phase.m_nCurrentPhaseHash != stringhash32("P150_HELI")
-				&& !Trigger::GameFlags.GAME_KOGEKKO_PLAY) || PlayerAction == 35 ||
-				(PlayerAction == 205 || PlayerAction == 206) || PlayerAction == 12
-				|| (PlayerAction == 0 && (Phase.m_nCurrentPhaseHash == stringhash32("P720_LEG_1") || Phase.m_nCurrentPhaseHash == stringhash32("P720_LEG_2")))
-				&& (PlayerAction != 69 && PlayerAction != 70))
-			{
-				player->m_nCurrentAction = 0x00100000;
-				player->m_nCurrentActionId = 1;
-			}
+				}
 
 			
 			if (PlayerAction >= 0x00100000)
 			{
 				injector::WriteMemory<unsigned int>(SamUnknownFunctionAddress, SamUnknownFunction, true);
 
-				injector::WriteMemory<unsigned int>(SamUpdateAddress, ((!EventTrigger && CurrentPhase != 0x750 && CurrentPhase!=0x138) ? SamUpdate : RaidenUpdate), true);
+				injector::WriteMemory<unsigned int>(SamUpdateAddress, ((!EventTrigger && CurrentPhase != 0x750) ? SamUpdate : RaidenUpdate), true);
 				
 				injector::WriteMemory<unsigned int>(SamStateMachineFactoryAddress, SamStateMachineFactory, true);
 			}
@@ -773,6 +807,7 @@ void cheat::EnableSamInCapmaign() noexcept
 				injector::WriteMemory<unsigned int>(SamUpdateAddress, RaidenUpdate, true);
 				injector::WriteMemory<unsigned int>(SamStateMachineFactoryAddress, RaidenStateMachineFactory, true);
 			}
+			ResetActions();
 		}
 	}
 	else {
@@ -806,6 +841,59 @@ void cheat::ChangeMission(unsigned int phaseId, static const char* phaseName, bo
 		if (phaseName[i] != NULL) injector::MemoryFill(phaseNameAddress + i, phaseName[i], 1, true);
 }
 
+unsigned int cheat::ReadDoublePointer(unsigned int baseAddress, unsigned int offset) noexcept
+{
+	unsigned int address = 0;
+	address = injector::ReadMemory<unsigned int>(baseAddress, true);
+	if (address) {
+		return injector::ReadMemory<unsigned int>(address + offset, true);
+	}
+	else return 0;
+}
+
+void cheat::ResetActions() noexcept 
+{
+	Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPlayer;
+	if (player && 
+		(!Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE &&
+		!Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE &&
+		!Trigger::StaFlags.STA_NINJARUN &&
+		!Trigger::GameFlags.GAME_KOGEKKO_PLAY)) {
+
+
+			injector::WriteMemory<unsigned int>(shared::base + 0x129EC28,
+				(player->m_nCurrentAction == 69) ? shared::base + 0x7DA310 : shared::base + 0x46B890, true);
+
+		if (player->m_nCurrentAction == 81 || player->m_nCurrentAction == 79 || player->m_nCurrentAction == 111
+			|| player->m_nCurrentAction == 102 || player->m_nCurrentAction == 97
+			|| player->m_nCurrentAction == 3 || player->m_nCurrentAction == 4
+			|| player->m_nCurrentAction == 105 || player->m_nCurrentAction == 110
+			|| player->m_nCurrentAction == 116 || player->m_nCurrentAction == 117
+			|| player->m_nCurrentAction == 91 || player->m_nCurrentAction == 12
+			) {
+			player->m_nCurrentAction = 0x00100000;
+			player->m_nCurrentActionId = 1;
+		}
+		if (player->m_nCurrentAction == 205 || player->m_nCurrentAction == 206) {
+			player->m_nCurrentAction = 0x00100055;
+			player->m_nCurrentActionId = 1;
+		}
+	}
+}
+
+void cheat::WriteDoublePointer(unsigned int baseAddress, unsigned int offset, unsigned int value) noexcept
+{
+	unsigned int address = 0;
+	address = injector::ReadMemory<unsigned int>(baseAddress, true);
+	if (address)
+		injector::WriteMemory<int>(address + offset, value, true);
+}
+
+unsigned int cheat::ReadSinglePointer(unsigned int baseAddress, unsigned int offset) noexcept
+{
+	return injector::ReadMemory<unsigned int>(baseAddress + offset, true);
+}
+
 void cheat::changeModelID() noexcept
 {
 
@@ -815,17 +903,51 @@ void cheat::changeModelID() noexcept
 		uintptr_t sheathAddress = 0x00000000;
 		uintptr_t visorAddress = 0x00000000;
 
-		int currentModelID = injector::ReadMemory<int>(shared::base + 0x17E9FB4, true);
+
+		//ModelId = 0x11406;
+		//HairId = 0x11401;
+		//HeadId = 0x11405;
+		//SheathId = 0x11404;
+		//VisorId = 0x11402;
+		for (int i=0;i<14;i++)
+			for (int j = 0;j < 5;j++) {
+				if (i!=7 && PlayerIsSam) 
+					injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], SamModelIds[j], true);
+				if (!PlayerIsSam)
+					injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], RaidenModelIDs[i][j], true);
+			}
+
+		/*int currentModelID = injector::ReadMemory<int>(shared::base + 0x17E9FB4, true);
+		int currentModelIDSecondary = injector::ReadMemory<int>(shared::base + 0x17EA024, true);
 
 		//if (!samModel) {
 
 			//Standart armor
-		if (currentModelID == 0) {
+		if (currentModelID == 0 && currentModelIDSecondary==0) {
 			modelAddress = shared::base + 0x14A9828;
 			hairAddress = shared::base + 0x14A982C;
 			headAddress = shared::base + 0x14A9838;
 			sheathAddress = shared::base + 0x14A9834;
 			visorAddress = shared::base + 0x14A9830;
+		}
+
+
+
+			injector::WriteMemory<unsigned int>(modelAddress, ModelId, true);
+			injector::WriteMemory<unsigned int>(hairAddress, HairId, true);
+			injector::WriteMemory<unsigned int>(headAddress, HeadId, true);
+			injector::WriteMemory<unsigned int>(sheathAddress, SheathId, true);
+			injector::WriteMemory<unsigned int>(visorAddress, VisorId, true);
+
+
+
+		//Monsoon & Armstrong
+		if (currentModelID == 0 && currentModelIDSecondary == 13) {
+			modelAddress = shared::base + 0x14A992C;
+			hairAddress = shared::base + 0x14A9930;
+			headAddress = shared::base + 0x14A993C;
+			sheathAddress = shared::base + 0x14A9938;
+			visorAddress = shared::base + 0x14A9934;
 		}
 
 		//Blue
@@ -946,22 +1068,18 @@ void cheat::changeModelID() noexcept
 			sheathAddress = shared::base + 0x14A9960;
 			visorAddress = shared::base + 0x14A995C;
 		}*/
-		ModelId = 0x11406;
-		HairId = 0x11401;
-		HeadId = 0x11405;
-		SheathId = 0x11404;
-		VisorId = 0x11402;
 
-		if (modelAddress != 0x00000000 && ModelId)
-		injector::WriteMemory<unsigned int>(modelAddress, ModelId, true);
+
+/*		if (modelAddress != 0x00000000 && ModelId)
+			injector::WriteMemory<unsigned int>(modelAddress, ModelId, true);
 		if (hairAddress != 0x00000000 && HairId)
-		injector::WriteMemory<unsigned int>(hairAddress, HairId, true);
-		if (headAddress != 0x00000000 && HeadId)     
-		injector::WriteMemory<unsigned int>(headAddress, HeadId, true);
-		if (sheathAddress != 0x00000000 && SheathId)   
-		injector::WriteMemory<unsigned int>(sheathAddress, SheathId, true);
-		if (visorAddress != 0x00000000 && VisorId)    
-		injector::WriteMemory<unsigned int>(visorAddress, VisorId, true);
+			injector::WriteMemory<unsigned int>(hairAddress, HairId, true);
+		if (headAddress != 0x00000000 && HeadId)
+			injector::WriteMemory<unsigned int>(headAddress, HeadId, true);
+		if (sheathAddress != 0x00000000 && SheathId)
+			injector::WriteMemory<unsigned int>(sheathAddress, SheathId, true);
+		if (visorAddress != 0x00000000 && VisorId)
+			injector::WriteMemory<unsigned int>(visorAddress, VisorId, true);*/
 }
 
 // Handles all cheats at once

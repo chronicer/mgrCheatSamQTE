@@ -63,6 +63,11 @@ namespace cheat
 	//void LoadStyleSwitcher();
 
 	void changeModelID() noexcept;
+	unsigned int ReadDoublePointer(unsigned int baseAddress, unsigned int offset) noexcept;
+	unsigned int ReadSinglePointer(unsigned int baseAddress, unsigned int offset) noexcept;
+	void WriteDoublePointer(unsigned int baseAddress, unsigned int offset, unsigned int value) noexcept;
+
+	void ResetActions() noexcept;
 	//mission change
 	void ChangeMission(unsigned int phaseId, static const char* phaseName, bool isDLCPhase) noexcept;
 
