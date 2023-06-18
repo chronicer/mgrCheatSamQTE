@@ -20,9 +20,27 @@
 #include "../imgui/imgui_impl_dx9.h"
 
 #include <string>
+#include <BehaviorEmBase.h>
 
 #pragma warning(disable : 4996)
 
+/*************************** Player Info ***************************/
+unsigned int CurrentPlayerModelParts = shared::base + 0x17EA01C;
+bool LoopPlayerAction = false;
+bool LoopPlayerActionId = false;
+bool LoopBossAction = false;
+bool LoopBossActionId = false;
+
+
+int PlayerActionForLoop = 0;
+
+unsigned int hairValue = 0x0;
+unsigned int visorValue = 0x0;
+unsigned int sheathValue = 0x0;
+unsigned int headValue = 0x0;
+unsigned int weaponValue = 0x0;
+int AnimationForTest = 4;
+/*************************** Player Info ***************************/
 
 
 /*************************** MISSIONS ***************************/
@@ -280,6 +298,95 @@ void gui::RenderGUI() noexcept
 
 				ImGui::EndTabItem();
 			}
+
+
+			if (ImGui::BeginTabItem("Player Info")) {
+
+				Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPlayer;
+				if (player) {
+
+					ImGui::PushItemWidth(100);
+					ImGui::Text("Player Model ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x0));
+					ImGui::Text("Player Hair ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x4));
+					ImGui::SameLine();
+					if (ImGui::InputScalar("Set Hair Id", ImGuiDataType_U64, &hairValue, nullptr, nullptr, "%08X"))
+						cheat::WriteDoublePointer(CurrentPlayerModelParts, 0x4, hairValue);
+					
+					ImGui::Text("Player Visor ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x8));
+					ImGui::SameLine();
+					if (ImGui::InputScalar("Set Visor Id", ImGuiDataType_U64, &visorValue, nullptr, nullptr, "%08X"))
+						cheat::WriteDoublePointer(CurrentPlayerModelParts, 0x8, visorValue);
+					
+					
+					ImGui::Text("Player Sheath ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0xC));
+					ImGui::SameLine();
+					if (ImGui::InputScalar("Set Sheath Id", ImGuiDataType_U64, &sheathValue, nullptr, nullptr, "%08X"))
+						cheat::WriteDoublePointer(CurrentPlayerModelParts, 0xC, sheathValue);
+
+
+					ImGui::Text("Player Head ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x10));
+					ImGui::SameLine();
+					if (ImGui::InputScalar("Set Head Id", ImGuiDataType_U64, &headValue, nullptr, nullptr, "%08X"))
+						cheat::WriteDoublePointer(CurrentPlayerModelParts, 0x10, headValue);
+
+					ImGui::Text("Player Weapon ID: %X", cheat::ReadDoublePointer(shared::base+0x17E9FF4, 0x0));
+					
+
+					ImGui::Value("Player Current Action",player->m_nCurrentAction);
+					ImGui::SameLine();
+				//	if (!LoopPlayerAction)
+					ImGui::InputScalar("Set action", ImGuiDataType_S32,  &player->m_nCurrentAction);
+					/*if (LoopPlayerAction)
+						ImGui::InputScalar("Set action", ImGuiDataType_S32, &PlayerActionForLoop);
+
+					ImGui::SameLine();
+					ImGui::Checkbox("Loop", &LoopPlayerAction);
+					if (LoopPlayerAction) {
+						player->m_nCurrentAction = PlayerActionForLoop;
+					}*/
+
+					ImGui::Value("Player Current Action ID",player->m_nCurrentActionId);
+					ImGui::SameLine();
+					ImGui::InputScalar("Set action Id", ImGuiDataType_S32, &player->m_nCurrentActionId);
+				
+					ImGui::Value("Player Current Animation ID", cheat::ReadSinglePointer(player->field_774, 0x14));
+					ImGui::Value("Player Max Health", player->m_nMaxHealth);
+					ImGui::Value("Player Current Health", player->m_nHealth);
+
+					
+					
+					ImGui::InputScalar("Set Animation For Test", ImGuiDataType_S32, &AnimationForTest);
+					if (ImGui::Button("Call Animation by ID")) {
+						player->FindAnimation(AnimationForTest, 0, 0.2, 1.0, 0x8000000, -1.0, 1.0);
+					}
+
+					ImGui::Separator();
+					Entity* targetEnemyEntity = *(Entity**)(shared::base + 0x19BFF60);
+					if (targetEnemyEntity) {
+						BehaviorEmBase* targetEnemy = (BehaviorEmBase*)targetEnemyEntity->m_pInstance;
+						
+						ImGui::Value("Boss Current Action", targetEnemy->m_nCurrentAction);
+						ImGui::SameLine();
+						
+						ImGui::InputScalar("Set Boss Action", ImGuiDataType_S32, &targetEnemy->m_nCurrentAction);
+						
+						ImGui::Value("Boss Current Action ID", targetEnemy->m_nCurrentActionId);
+						ImGui::SameLine();
+						ImGui::InputScalar("Set Boss Action Id", ImGuiDataType_S32, &targetEnemy->m_nCurrentActionId);
+						
+						ImGui::Value("Boss Current Animation ID", cheat::ReadSinglePointer(targetEnemy->field_774, 0x14));
+						ImGui::Value("Boss Max Health", targetEnemy->m_nMaxHealth);
+						
+						ImGui::Value("Boss Current Health", targetEnemy->m_nHealth);
+						ImGui::SameLine();
+						ImGui::InputScalar("Set Boss Health", ImGuiDataType_S32, &targetEnemy->m_nHealth);
+
+					}
+
+				}
+				ImGui::EndTabItem();
+			}
+
 			if (ImGui::BeginTabItem("Entities"))
 			{
 				ImGui::Checkbox("Ground Cheat", &cheat::groundCheat);
