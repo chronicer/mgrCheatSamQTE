@@ -3626,6 +3626,61 @@ public:
   int GetMaxHealth();
   cVec4 GetPosForCamera();
   void ForceKill();
+
+  void SamTestAttack();
+  void FindAnimation(int a2, int a3, float a4, float a5, int a6, float a7, float a8);
+  void ArmstrongTick();
+  void RaidenUpdate();
+  void RaidenHandleAction();
+  void RaidenUpdateInput();
+
+  void SamUpdateInput();
+  void SamHandleAction();
+  void SamCharges();
+
+  void SamChargeCall(float a2);
+
+
+  //TEST
+  void sub_77B270(float arg0, float a3, float a4, float a5);
+  void sub_464400(int a2, int a3, float a4, float a5, int a6); //anim test 2?
+  bool sub_68C760(int a1);
+  void sub_7884C0();
+  void sub_46F130();
+  void sub_786010(int a1);
+  //void sub_77B270(float a1, float a2, float a3, float a4);
+
+
+  //Test for Raiden update
+ void sub_7954D0();
+ void sub_7E9130();
+ void sub_77D1B0();
+ void sub_788B90();
+
+ void sub_7E9E40();
+ void sub_7EE8D0();
+ void sub_787FF0();
+
+ //button X for Raiden???
+ void sub_805D50();
+
+ bool SamTestAttack(int* a2);
+
+ void sub_794790(float a2, float a3);
+ 
+ void sub_7E8330(); //sword lighting?
+
+
+  int sub_45C910();
+
+  //bool sub_68C760(int a1); // test animation end?
+  Entity KamaititiCreate(float a2);
+
+  bool IsUnarmed();
+
+
+  void ArmstrongHeal();
+  void ArmstrongModelFix();
 };
 
 VALIDATE_SIZE(Pl0000, 0x5400);
