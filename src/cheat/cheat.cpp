@@ -5,9 +5,12 @@
 #include <cSlowRateManager.h>
 #include <Trigger.h>
 #include <GameMenuStatus.h>
+#include <EntitySystem.h>
 #include <Pl0000.h>
 #include <cGameUIManager.h>
+#include <Hw.h>
 #include <PlayerManagerImplement.h>
+#include <BehaviorEmBase.h>
 #include <PhaseManager.h>
 #include <string>
 #include <sstream>
@@ -26,9 +29,19 @@ DWORD InfiniteRocketsCaveExit = shared::base + 0x5499F9;
 DWORD InfiniteGrenadeCaveExit = shared::base + 0x54D8D6;
 DWORD GroundCheatCaveExit = shared::base + 0xE6B464;
 DWORD VRTimerCaveExit = shared::base + 0x81B44A;
+DWORD TestEntityIndexChanger = shared::base + 0x6820C4;
 
 bool changedStyle = false;
+bool oldChangedStyle = true;
 bool changeOnce = true;
+const int MAX_LINES = 50;
+std::string nums1[MAX_LINES]; // массив для первых чисел
+std::string nums2[MAX_LINES]; // массив для вторых чисел
+
+int v5[10] = {0,0,0,0,0,0,0,0,0,0};
+
+
+inline std::string test = "";
 
 /*************************** SAM IN RAIDEN CAMPAIGN ***************************/
 
@@ -38,11 +51,12 @@ unsigned int SamUpdateAddress = shared::base + 0x129EAD0;						//Sam update, for
 
 unsigned int SamStateMachineFactoryAddress = shared::base + 0x012492C0;			//Sam blade mode address
 unsigned int SamQTEActionsAddress = shared::base + 0x0129EA88;					//For slider and fix Mistral
-
+unsigned int SamUpdateInputAddress = shared::base + 0x129EE48;
 
 /*************************** SAM FUNCTIONS ***************************/
 
 unsigned int SamUnknownFunction = shared::base + 0x493BD0;
+unsigned int SamUpdateInput = shared::base + 0x492EB0;
 unsigned int SamUpdate = shared::base + 0x45C700;								//Sam update, for fix sword in sheath, etc
 unsigned int SamStateMachineFactory = shared::base + 0x468E60;					//Sam blade mode
 unsigned int SamQTEActions = shared::base + 0x6C38F0;							//Another name - Pl1400::field_4, for slider and fix Mistral
@@ -77,9 +91,6 @@ unsigned int FixMistralAndSliderAddress7 = shared::base + 0x1F5B0; //fix slow mo
 
 
 bool fileLoadOnce = true;
-const int MAX_LINES = 4;
-std::string nums1[MAX_LINES]; // массив для первых чисел
-std::string nums2[MAX_LINES]; // массив для вторых чисел
 int oldModelId = -1;
 int oldPlayer = false;
 /*************************** SAM IN RAIDEN CAMPAIGN END ***************************/
@@ -95,7 +106,7 @@ static const unsigned int ModelAdresses[14][5] =
 	{0x14A9864,0x14A9868,0x14A9874,0x14A9870,0x14A986C}, // 3 - yellow
 	{0x14A9878,0x14A987C,0x14A9888,0x14A9884,0x14A9880}, // 4 - Desperado
 	{0x14A988C,0x14A9890,0x14A989C,0x14A9898,0x14A9894}, // 5 - Costume
-	{0x14A98A0,0x14A98A4,0x14A98B0,0x14A98AC,0x14A98A8}, // 6 - Mariachi
+	{0x14A98A0,0x14A98A8,0x14A98B0,0x14A98AC,0x14A98A4}, // 6 - Mariachi
 	
 	{0x14A98B4,0x14A98B8,0x14A98C4,0x14A98C0,0x14A98BC}, // 7 - Prologue
 	{0x14A98C8,0x14A98CC,0x14A98D8,0x14A98D4,0x14A98D0}, // 8 - Original
@@ -145,6 +156,71 @@ unsigned int HeadId = 0x0;
 unsigned int SheathId = 0x0;
 unsigned int VisorId = 0x0;
 
+
+
+std::string cheat::getStyles(std::string Source) {
+
+	std::string abc = "ahahah";
+	const int MAX_PAIRS = 50; // Максимальное количество пар ключ-значение
+	std::string a[MAX_PAIRS]; // Массив для значений слева от знака равенства
+	std::string b[MAX_PAIRS]; // Массив для значений справа от знака равенства
+	int index = 0;
+
+	// Создаем поток для чтения строки
+	std::istringstream iss(Source);
+
+	// Считываем пары ключ-значение из потока
+	std::string pair;
+	while (std::getline(iss, pair, ',')) {
+		// Разбиваем пару по знаку равенства
+		std::istringstream pair_iss(pair);
+		std::string left, right;
+		std::getline(pair_iss, left, '=');
+		std::getline(pair_iss, right);
+
+		// Добавляем значения в массивы
+		if (index < MAX_PAIRS) {
+			nums1[index] = left;
+			nums2[index] = right;
+			++index;
+		}
+		else {
+			return abc;
+		}
+	}
+	return abc;
+}
+
+
+void cheat::AnimationsToArrays() {
+
+	if (testStyle != "") {
+		// Максимальное количество пар ключ-значение
+		int index = 0;
+
+		// Создаем поток для чтения строки
+		std::istringstream iss(testStyle);
+
+		// Считываем пары ключ-значение из потока
+		std::string pair;
+		while (std::getline(iss, pair, ',')) {
+			// Разбиваем пару по знаку равенства
+			std::istringstream pair_iss(pair);
+			std::string left, right;
+			std::getline(pair_iss, left, '=');
+			std::getline(pair_iss, right);
+
+			// Добавляем значения в массивы
+			if (index < MAX_LINES) {
+				nums1[index] = left;
+				nums2[index] = right;
+				++index;
+			}
+		}
+	}
+}
+
+
 void __declspec(naked) OneHitKillCave() noexcept
 {
 	__asm {
@@ -153,6 +229,41 @@ void __declspec(naked) OneHitKillCave() noexcept
 		jmp OneHitKillCaveExit
 	}
 }
+
+
+
+void __declspec(naked) EntityTestIndexCave() noexcept
+{
+	__asm {
+		mov eax, [ebp - 4]
+			add eax, 182026
+			mov[ebp - 4], eax
+		jmp TestEntityIndexChanger
+	}
+}
+
+
+// Infinite sub-weapon ammo
+void cheat::InfEntity() noexcept
+{
+	static bool once = false;
+
+		injector::MakeJMP(shared::base + 0x6820C8, &EntityTestIndexCave, true);
+		once = true;
+
+		
+
+		unsigned char code_cave[9] = {
+	0x8B, 0x45, 0xFC,     // mov eax, [ebp-4]
+	0x83, 0xC0, 0x0002C70A,     // add eax, 5
+	0x89, 0x45, 0xFC      // mov [ebp-4], eax
+		};
+
+		injector::WriteMemoryRaw(shared::base + 0x6820C8, code_cave, 9, true);
+
+}
+
+
 
 void __declspec(naked) InfiniteRocketsCave() noexcept
 {
@@ -466,6 +577,11 @@ DWORD *__cdecl cheat::changeBGM(const char* a1) {
 }
 
 
+signed __int32 __cdecl cheat::QTEButtonsCall(signed __int32 a1, signed __int32 a2) {
+	return ((signed (__cdecl*)(signed __int32, signed __int32))(shared::base + 0x8BC8F0))(a1, a2);
+}
+
+
 void cheat::ChangePlayerSlowRate() noexcept
 {
 	Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPlayer;
@@ -494,36 +610,6 @@ int cheat::hex_to_int(const std::string& str)
 	return ((hex_num & 0xFF000000) >> 24) | ((hex_num & 0x00FF0000) >> 8)
 		| ((hex_num & 0x0000FF00) << 8) | ((hex_num & 0x000000FF) << 24);;
 }
-/*void cheat::LoadStyleSwitcher() {
-	std::ifstream file("StyleSwitcher.txt");
-	if (file.is_open())
-	{
-		// Создаем переменную для хранения значения pl1400
-		std::string pl1400;
-
-		int count = 0;
-		std::string line;
-		while (std::getline(file, line)) {
-			std::istringstream iss(line);
-			std::string num_str, eq, hex_str;
-
-			if (!(iss >> num_str >> eq >> hex_str)) {
-				if (iss.eof()) {
-					continue;
-				}
-			}
-
-			nums1[count] = num_str;
-			nums2[count] = hex_str;
-			count++;
-
-			if (count >= MAX_LINES) {
-				break;
-			}
-		}
-	}
-	fileLoadOnce = false;
-}*/
 
 
 void cheat::ChangePlayerOnce() noexcept
@@ -546,6 +632,7 @@ void cheat::ChangePlayerOnce() noexcept
 
 		injector::WriteMemory<int>(shared::base + 0x7D641F, 329, true); //fix Raiden blademode
 		injector::WriteMemory<int>(shared::base + 0x7B6EF7, 331, true); //fix Raiden blademode
+		injector::WriteMemory<int>(shared::base + 0x7D68C0, 331, true); //fix Raiden blademode
 		injector::WriteMemory<int>(shared::base + 0x7B6EF0, 414, true); //fix Raiden blademode
 		injector::WriteMemory<int>(shared::base + 0x7B7284, 358, true); //fix Raiden blademode
 
@@ -576,6 +663,13 @@ void cheat::ChangePlayerOnce() noexcept
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress5, shared::base + 0x1735B20, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress6, shared::base + 0x1735B20, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress7, shared::base + 0x1735B20, true);
+
+		//Fix blade mode color
+		injector::WriteMemory<unsigned int>(shared::base + 0x1CA3EC, 249, true);
+
+		//Fix zandatsu position
+		injector::WriteMemory<unsigned int>(shared::base + 0x6E46E7, 0x730, true);
+
 
 		//Change Players ID
 		injector::WriteMemory<unsigned int>(shared::base + 0x014A1D70, 0x00011400, true);
@@ -642,6 +736,12 @@ void cheat::ChangePlayerOnce() noexcept
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress5, shared::base + 0x17E9DB8, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress6, shared::base + 0x17E9DB8, true);
 		injector::WriteMemory<unsigned int>(FixMistralAndSliderAddress7, shared::base + 0x17E9DB8, true);
+
+		//Fix blade mode color
+		injector::WriteMemory<unsigned int>(shared::base+0x1CA3EC, 240, true);
+		
+		//Fix zandatsu position
+		injector::WriteMemory<unsigned int>(shared::base+0x6E46E7, 0x700, true);
 		
 		//Change Players ID
 		injector::WriteMemory<unsigned int>(shared::base + 0x014A1D70, 0x00010010, true);
@@ -661,6 +761,62 @@ void cheat::ChangePlayerOnce() noexcept
 		injector::WriteMemory<unsigned int>(SamUpdateAddress, SamUpdate, true);
 	}
 }
+
+const char* cheat::GetAnimationNameById(void* pAnimUnit, int animId)
+{
+	return ((const char* (__thiscall*)(void*, int))(shared::base + 0x4D7D70))(pAnimUnit, animId);
+}
+
+void cheat::AnimationChanger(unsigned int pAnimUnit) {
+
+
+	unsigned int animationName = injector::ReadMemory<unsigned int>(pAnimUnit,true);
+	animationName = injector::ReadMemory<unsigned int>(animationName+0x4,true);
+	unsigned int targetAnim = 0x0;
+	unsigned int animAddr = 0x0;
+	int j = 0x0;
+
+	 for (int i=0;i<857;i++) {
+		targetAnim = injector::ReadMemory<unsigned int>(animationName + 0x8 + j, true);
+		
+
+		for (int k=0;k<MAX_LINES;k++)
+		if (targetAnim == cheat::hex_to_int(changedStyle ? nums1[k] : nums2[k])) {
+			injector::WriteMemory<unsigned int>(animationName + 0x8 + j, cheat::hex_to_int(changedStyle ? nums2[k] : nums1[k]), true);
+			break;
+		}
+		targetAnim = 0x0;
+		j += 0x3C;
+	}
+}
+
+void cheat::InstantCharges(unsigned int pAnimUnit) {
+	unsigned int animationName = injector::ReadMemory<unsigned int>(pAnimUnit, true);
+	animationName = injector::ReadMemory<unsigned int>(animationName + 0x4, true);
+	int targetAnim = 0;
+	unsigned int animAddr = 0x0;
+	unsigned int j = 0x0;
+	int ChargesAnimationId[5] = {82,88,93,98,135};
+
+
+	for (int i = 0;i<=135;i++) {
+		targetAnim = injector::ReadMemory<int>(animationName + j, true);
+
+		for (int k = 0;k<5;k++) 
+			if (targetAnim == ChargesAnimationId[k] && injector::ReadMemory<int>(animationName + 0xC + j,true)>1) {
+				injector::WriteMemory(animationName + 0xC + j, 1, true);
+				break;
+			}
+		j += 0x3C;
+	}
+}
+
+void* cheat::KamaititiCreate(int *player, float a2) noexcept
+{
+	return ((void * (__thiscall*)(int*, float))(shared::base + 0x46C610))(player, a2);
+}
+
+
 
 void cheat::EnableSamInCapmaign() noexcept 
 {
@@ -682,13 +838,11 @@ void cheat::EnableSamInCapmaign() noexcept
 	if (BossHPShow) BossHPShow = injector::ReadMemory<int>(BossHPShow + 0x870);
 
 
+
+
 	if (PlayerIsSam) {
-		int currentModelID = injector::ReadMemory<int>(shared::base + 0x17E9FB4, true);
+
 		
-		if (currentModelID != oldModelId) {
-			//cheat::changeModelID();
-			//oldModelId = currentModelID;
-		}
 
 		injector::WriteMemory<byte>(shared::base + 0x93B13C, skill, true);
 
@@ -697,47 +851,67 @@ void cheat::EnableSamInCapmaign() noexcept
 		
 		unsigned int CurrentPhase = Phase.GetCurrentPhase();
 
-		//if (GetAsyncKeyState('4') & 0x8000 && changedStyle) {
-			//changedStyle = false;
-			//player->field_2620 = 0;
-		//}
-
-//		if (GetAsyncKeyState('5') & 0x8000 && !changedStyle) {
-	//		changedStyle = true;
-		//	player->field_2620 = 0;
-		//}
+		
 
 
 		//new code
 		if (player) {
+			
+			if (EnableInstantCharges)
+			InstantCharges((unsigned int)player->field_75C);
+
+			unsigned int checkArma = injector::ReadMemory<unsigned int>(shared::base + 0x1BE80E,true);
+			unsigned char original[5] = { 0xE8, 0x7D, 0xC6, 0x4D, 0x00};
+			
+			if (checkArma == 0x50967DE8) {
+				injector::MakeNOP(shared::base + 0x1BE80E, 5, true);
+				injector::WriteMemoryRaw(shared::base + 0x1BE80E, original, 5, true);
+			}
+
+
+			Entity* targetEnemyEntity = *(Entity**)(shared::base + 0x19BFF60);
+
 		
 			unsigned int animationUnitAddr = player->field_75C;
-
-			if (player->m_nCurrentAction != 0x0010000F) changedStyle = false;
-
-		//	if (player->field_2620 == 3) {
-				//changedStyle = !changedStyle;
-				//player->field_2620 = 0;
-			//}
-/*
-			if (changedStyle) {
-				//injector::WriteMemory<int>(animationUnitAddr + 0x1048, hex_to_int(values[0].c_str()), true);
-				//injector::WriteMemory<int>(animationUnitAddr + 0x1084, hex_to_int(values[1].c_str()), true);
-				//injector::WriteMemory<int>(animationUnitAddr + 0x10C0, hex_to_int(values[2].c_str()), true);
-			//	if (player->field_2620 == 3) player->field_2620 = 0;
-			}
-			else {
-				injector::WriteMemory<int>(animationUnitAddr + 0x1048, hex_to_int(nums1[0]), true);
-				injector::WriteMemory<int>(animationUnitAddr + 0x1084, hex_to_int(nums2[1]), true);
-				injector::WriteMemory<int>(animationUnitAddr + 0x10C0, hex_to_int("2002"), true);
-			}*/
 
 
 			unsigned int PlayerAction = player->m_nCurrentAction;
 			int EventTrigger = injector::ReadMemory<int>(shared::base + 0x14A9F04);
 			unsigned int SundownerSlider = injector::ReadMemory<unsigned int>(shared::base + 0x18793A0);
 
-			if (CurrentPhase == 0xA50) player->RaidenUpdateInput();
+			auto playerManager = g_pPlayerManagerImplement;
+
+
+
+
+			
+			if (targetEnemyEntity && (CurrentPhase==0x750 || CurrentPhase == 0x470)) {
+
+				BehaviorEmBase* targetEnemy = (BehaviorEmBase*)targetEnemyEntity->m_pInstance;
+
+
+				    
+
+					
+
+				injector::WriteMemory<unsigned int>(shared::base + 0x460A93, shared::base+0x17E9C78, true);//block damage
+				injector::WriteMemory<unsigned int>(shared::base + 0x6BB1CD, shared::base+0x17E9C78, true);//double damage to boss
+				
+				if (player->m_nCurrentAction == 0x10001C) {
+					targetEnemy->RageCall(5);
+					targetEnemy->field_E84 = 2000.0;
+				}
+				
+				
+				if (targetEnemy->field_E80 && player->m_nCurrentAction>=0x00100000)
+					targetEnemy->m_pEntity->m_pSlowRateUnit->m_fCurrentSlowRate = 1.40;
+				else targetEnemy->m_pEntity->m_pSlowRateUnit->m_fCurrentSlowRate = 1.0;
+			}
+
+			player->sub_7E8330();
+
+
+
 
 			/******************** FIX STANDING HERE *****************************/
 			injector::WriteMemory<unsigned int>(shared::base + 0x129EDE0,
@@ -748,9 +922,11 @@ void cheat::EnableSamInCapmaign() noexcept
 			injector::WriteMemory<unsigned int>(shared::base + 0x129EBD0,
 				(CurrentPhase == 0x170 || CurrentPhase == 0xA15 || CurrentPhase == 0xA50 || CurrentPhase == 0x138
 					|| CurrentPhase == 0x150 || Phase.m_nCurrentPhaseHash == stringhash32("P330_3RD")
-					|| CurrentPhase == 0x470
+					|| CurrentPhase == 0x470 || CurrentPhase == 0x410
 					) ? shared::base + 0x78C900 : shared::base + 0x45CCA0, true);
 			/******************** FIX MISTRAL *****************************/
+			
+			
 			if (Trigger::GameFlags.GAME_ENABLE_INFINITE_RIPPER_MODE)
 				Trigger::GameFlags.GAME_ENABLE_INFINITE_RIPPER_MODE = 0;
 			
@@ -758,56 +934,84 @@ void cheat::EnableSamInCapmaign() noexcept
 			if (PlayerAction == 232 && player->m_nCurrentActionId == 2 && Phase.m_nCurrentPhaseHash == stringhash32("P138_BREAKDOWN_1")) {
 
 				Trigger::GameFlags.GAME_QTE_UI_DISABLE = 1;
-				player->m_nCurrentAction = 232;
-				player->m_nCurrentActionId = 10;
+				player->SetState(232, 10, 0, 0);
 				injector::WriteMemory<int>(animationUnitAddr + 0x30A0, hex_to_int("a10c"), true);
 				injector::WriteMemory<int>(animationUnitAddr + 0x30DC, hex_to_int("a10f"), true);
 				
 			}
-			if (Phase.m_nCurrentPhaseHash != stringhash32("P138_BREAKDOWN_1")) 
+			if (Phase.m_nCurrentPhaseHash != stringhash32("P138_BREAKDOWN_1") && !Trigger::GameFlags.GAME_KOGEKKO_PLAY) 
 				injector::WriteMemory<int>(animationUnitAddr + 0x30A0, hex_to_int("4201"), true);
 			
 			if (Phase.m_nCurrentPhaseHash != stringhash32("P138_BREAKDOWN_1") && Phase.m_nCurrentPhaseHash != stringhash32("P138_HELI01_START")
-				&& Phase.m_nCurrentPhaseHash != stringhash32("P138_HELI01")
-				)
-			injector::WriteMemory<int>(animationUnitAddr + 0x30DC, hex_to_int("4220"), true);
+				&& Phase.m_nCurrentPhaseHash != stringhash32("P138_HELI01") && !Trigger::GameFlags.GAME_KOGEKKO_PLAY)
+				injector::WriteMemory<int>(animationUnitAddr + 0x30DC, hex_to_int("4220"), true);
 
-			if (Phase.m_nCurrentPhaseHash == stringhash32("P138_HELI01") && PlayerAction == 232) {
-				player->m_nCurrentAction = 0x00100000;
-				player->m_nCurrentActionId = 1;
-			}
+			if (Phase.m_nCurrentPhaseHash == stringhash32("P138_HELI01") && PlayerAction == 232)
+				player->SetState(0x00100000, 1, 0, 0);
 
 			if ((EventTrigger && player->field_3458 && BossAction!=393219)
 				 
-				||(Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
+				|| (Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
 				|| Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE
-				|| Trigger::StaFlags.STA_NINJARUN
-				|| Trigger::GameFlags.GAME_KOGEKKO_PLAY)
+				|| Trigger::StaFlags.STA_NINJARUN)
 				
 				&& (PlayerAction >= 0x00100000)
-				) {
-					player->m_nCurrentAction = 0;
-					player->m_nCurrentActionId = 1;
-				}
+				) player->SetState(0, 1, 0, 0);
 
 			
-			if (PlayerAction >= 0x00100000)
+			if (PlayerAction >= 0x00100000 && Phase.m_nCurrentPhaseHash != stringhash32("btl_sam_3"))
 			{
-				injector::WriteMemory<unsigned int>(SamUnknownFunctionAddress, SamUnknownFunction, true);
+				if ( (PlayerAction == 0x00100000 && Phase.m_nCurrentPhaseHash == stringhash32("btl_sam"))
+					|| (CurrentPhase == 0x470 && PlayerAction!=0x10001C)
+					)
+					if (player->field_B9C > 0) player->field_B9C = 0;
 
-				injector::WriteMemory<unsigned int>(SamUpdateAddress, ((!EventTrigger && CurrentPhase != 0x750) ? SamUpdate : RaidenUpdate), true);
+				if (cheat::ReadSinglePointer(SamUnknownFunctionAddress, 0x0) != SamUnknownFunction)
+				injector::WriteMemory<unsigned int>(SamUnknownFunctionAddress, SamUnknownFunction, true);
 				
+				injector::WriteMemory<unsigned int>(SamUpdateAddress, (!player->IsUnarmed() && !EventTrigger
+					? SamUpdate : RaidenUpdate), true);
+				
+				if (cheat::ReadSinglePointer(SamStateMachineFactoryAddress, 0x0) != SamStateMachineFactory)
 				injector::WriteMemory<unsigned int>(SamStateMachineFactoryAddress, SamStateMachineFactory, true);
 			}
 			
 			else if (PlayerAction < 0x00100000 || EventTrigger){
 				
+				if (player->field_B9C > 0) player->field_B9C = 0;
 
-				if (CurrentPhase != 0x0A50) injector::WriteMemory<unsigned int>(SamUnknownFunctionAddress, RaidenUpdateInput, true);
-				injector::WriteMemory<unsigned int>(SamUpdateAddress, RaidenUpdate, true);
+				injector::WriteMemory<unsigned int>(SamUpdateInputAddress, ((Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
+					|| Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE
+					|| Trigger::StaFlags.STA_NINJARUN || Phase.m_nCurrentPhaseHash == stringhash32("btl_sam_3")
+					) ? RaidenUpdateInput : SamUpdateInput), true);
+
+				if (!Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE
+					&& !Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE
+					&& !Trigger::StaFlags.STA_NINJARUN)
+				
+					if (cheat::ReadSinglePointer(SamUnknownFunctionAddress,0x0)!= RaidenUpdateInput
+					&& cheat::ReadSinglePointer(SamUpdateInputAddress, 0x0) != RaidenUpdateInput
+					&& Phase.m_nCurrentPhaseHash != stringhash32("btl_sam_3"))
+					injector::WriteMemory<unsigned int>(SamUnknownFunctionAddress, RaidenUpdateInput, true);
+				
+				
+				if (!Trigger::GameFlags.GAME_KOGEKKO_PLAY && cheat::ReadSinglePointer(SamUpdateAddress, 0x0) != RaidenUpdate)
+					injector::WriteMemory<unsigned int>(SamUpdateAddress, RaidenUpdate, true);
+				
+				if (cheat::ReadSinglePointer(SamStateMachineFactoryAddress, 0x0) != RaidenStateMachineFactory)
 				injector::WriteMemory<unsigned int>(SamStateMachineFactoryAddress, RaidenStateMachineFactory, true);
 			}
-			ResetActions();
+			if (CurrentPhase!=0xA50) ResetActions();
+
+			/******************** FIX PROLOGUE FINAL *****************************/
+			if (Phase.m_nCurrentPhaseHash == stringhash32("btl_sam_3")) {
+				if ((PlayerAction != 0x100051 && PlayerAction != 0x10004E) && PlayerAction >= 0x100000)
+					player->m_nCurrentAction = 0;
+				if (PlayerAction == 0x100051 || PlayerAction == 0x10004E) player->m_nCurrentAction = 201;
+
+			}
+			/******************** FIX PROLOGUE FINAL *****************************/
+
 		}
 	}
 	else {
@@ -841,15 +1045,7 @@ void cheat::ChangeMission(unsigned int phaseId, static const char* phaseName, bo
 		if (phaseName[i] != NULL) injector::MemoryFill(phaseNameAddress + i, phaseName[i], 1, true);
 }
 
-unsigned int cheat::ReadDoublePointer(unsigned int baseAddress, unsigned int offset) noexcept
-{
-	unsigned int address = 0;
-	address = injector::ReadMemory<unsigned int>(baseAddress, true);
-	if (address) {
-		return injector::ReadMemory<unsigned int>(address + offset, true);
-	}
-	else return 0;
-}
+
 
 void cheat::ResetActions() noexcept 
 {
@@ -858,8 +1054,12 @@ void cheat::ResetActions() noexcept
 		(!Trigger::GameFlags.GAME_SLIDER_NINJARUN_MODE &&
 		!Trigger::GameFlags.GAME_MISSILE_NINJYARUN_MODE &&
 		!Trigger::StaFlags.STA_NINJARUN &&
-		!Trigger::GameFlags.GAME_KOGEKKO_PLAY)) {
+		!Trigger::GameFlags.GAME_KOGEKKO_PLAY
+		)) {
 
+		if (player->m_nCurrentAction == 205 || player->m_nCurrentAction == 206) {
+			player->SetState(0x00100055, 1, 0, 0);
+		}
 
 			injector::WriteMemory<unsigned int>(shared::base + 0x129EC28,
 				(player->m_nCurrentAction == 69) ? shared::base + 0x7DA310 : shared::base + 0x46B890, true);
@@ -870,15 +1070,23 @@ void cheat::ResetActions() noexcept
 			|| player->m_nCurrentAction == 105 || player->m_nCurrentAction == 110
 			|| player->m_nCurrentAction == 116 || player->m_nCurrentAction == 117
 			|| player->m_nCurrentAction == 91 || player->m_nCurrentAction == 12
+			|| player->m_nCurrentAction == 93
 			) {
-			player->m_nCurrentAction = 0x00100000;
-			player->m_nCurrentActionId = 1;
+			player->SetState(0x00100000, 1, 0, 0);
 		}
-		if (player->m_nCurrentAction == 205 || player->m_nCurrentAction == 206) {
-			player->m_nCurrentAction = 0x00100055;
-			player->m_nCurrentActionId = 1;
-		}
+
 	}
+}
+
+
+unsigned int cheat::ReadDoublePointer(unsigned int baseAddress, unsigned int offset) noexcept
+{
+	unsigned int address = 0;
+	address = injector::ReadMemory<unsigned int>(baseAddress, true);
+	if (address) {
+		return injector::ReadMemory<unsigned int>(address + offset, true);
+	}
+	else return 0;
 }
 
 void cheat::WriteDoublePointer(unsigned int baseAddress, unsigned int offset, unsigned int value) noexcept
@@ -902,7 +1110,9 @@ void cheat::changeModelID() noexcept
 		uintptr_t headAddress = 0x00000000;
 		uintptr_t sheathAddress = 0x00000000;
 		uintptr_t visorAddress = 0x00000000;
-
+		
+		//fix Murasama in sheath
+		injector::WriteMemory<unsigned int>(shared::base + 0x14A99D4,0x00011403,true);
 
 		//ModelId = 0x11406;
 		//HairId = 0x11401;
@@ -911,8 +1121,25 @@ void cheat::changeModelID() noexcept
 		//VisorId = 0x11402;
 		for (int i=0;i<14;i++)
 			for (int j = 0;j < 5;j++) {
-				if (i!=7 && PlayerIsSam) 
+				if (i != 7 && PlayerIsSam) {
 					injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], SamModelIds[j], true);
+
+					//Desperado mask
+					if (i==4 && j==2)
+						injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], 0x00020026, true);
+
+					if (i == 4 && j == 4)
+						injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], 0x00020023, true);
+
+					//Costume
+					if (i == 5 && j == 0)
+						injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], 0x00011070, true);
+					
+					
+					//Mariachi 
+					if (i == 6 && j == 4)
+						injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], 0x00011061, true);
+				}
 				if (!PlayerIsSam)
 					injector::WriteMemory<unsigned int>(shared::base + ModelAdresses[i][j], RaidenModelIDs[i][j], true);
 			}
@@ -1111,6 +1338,7 @@ void cheat::HandleCheats() noexcept
 	NoDamageStatCheat();
 	StealthCheat();
 	InfVRTimer();
+//	InfEntity();
 	
 	// Entities
 	GroundCheat();
@@ -1142,6 +1370,10 @@ void cheat::LoadConfig() noexcept
 	noDamageStat = iniReader.ReadInteger("Battle", "NoDamageStat", 0) == 1;
 	stealth = iniReader.ReadInteger("Battle", "Stealth", 0) == 1;
 	infTimer = iniReader.ReadInteger("Battle", "InfiniteTimer", 0) == 1;
+
+
+	//testStyle = iniReader.ReadString("Styles", "Style", "");
+	//AnimationsToArrays();
 }
 
 // Saves config (ini file)
@@ -1169,6 +1401,10 @@ void cheat::SaveConfig() noexcept
 	iniReader.WriteInteger("Battle", "Stealth", stealth);
 	iniReader.WriteInteger("Battle", "InfiniteTimer", infTimer);
 }
+
+
+
+
 
 // Resets cheats
 void cheat::Reset() noexcept
