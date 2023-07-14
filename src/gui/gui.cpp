@@ -40,6 +40,7 @@ unsigned int sheathValue = 0x0;
 unsigned int headValue = 0x0;
 unsigned int weaponValue = 0x0;
 int AnimationForTest = 4;
+int EffectForTest = 0;
 /*************************** Player Info ***************************/
 
 
@@ -195,10 +196,23 @@ static const char* selectedPhaseName = subPhases[0][0][0];
 int selectedPhase = 0;
 int selectedPhaseN = 0;
 
-/*************************** MISSIONS END***************************/
+/*************************** MISSIONS END ***************************/
 
+
+/*************************** PLAYER NAMES ***************************/
+
+
+static const char* PlayerNames[42] = { "Unknown", "Cyborg", "S. Cyborg", "N. Cyborg", "Slider", "Trynoga", "Mastiff", "Irwing", 
+"Raptor", "Vodomerka", "LQ-84I", "Fernir", "Hammerhead", "M18A1", "M1143", "Turrel", "Camera", "MG Ray", "Grad", 
+"Mistral", "Double Mistral", "Monsoon", "Double Monsoon", "Sundowner", "Double Sundowner", "Sam", "Excelsus", "Dolzaev", 
+"Raiden", "Boris", "Cavin", "Cortney", "Doctor", "Wolf", "Sunny", "George", "Cop", "Khamsin", "Senator", "DLC 3", "DLC 4", "DLC 5" };
+
+int SelectedPlayerName = 0;
+const char* SelectedPlayerNameString = PlayerNames[0];
+/*************************** PLAYER NAMES END ***************************/
 
 bool once1 = false;
+signed int QTEButtonsType = 0x0;
 // Renders gui for cheats
 void gui::RenderGUI() noexcept
 {
@@ -296,6 +310,30 @@ void gui::RenderGUI() noexcept
 					player->m_pEntity->m_pSlowRateUnit->m_fCurrentSlowRate = cheat::playerSlowRate;
 				}
 
+				if (ImGui::BeginCombo("Player Name", SelectedPlayerNameString))
+				{
+					for (int n = 0; n < IM_ARRAYSIZE(PlayerNames); n++)
+					{
+
+						if (PlayerNames[n] == "" || PlayerNames[n] == NULL) break;
+
+						bool is_selected = (SelectedPlayerNameString == PlayerNames[n]);
+
+						if (ImGui::Selectable(PlayerNames[n], is_selected)) {
+
+							SelectedPlayerNameString = PlayerNames[n];
+							SelectedPlayerName = n;
+
+							//strcpy_s((char*)(shared::base + 0x12B6CEF), 2, "24" /* etc. */);
+
+						}
+
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
 				ImGui::EndTabItem();
 			}
 
@@ -303,9 +341,13 @@ void gui::RenderGUI() noexcept
 			if (ImGui::BeginTabItem("Player Info")) {
 
 				Pl0000* player = (Pl0000*)g_cGameUIManager.m_pPlayer;
+
+
+
 				if (player) {
 
 					ImGui::PushItemWidth(100);
+
 					ImGui::Text("Player Model ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x0));
 					ImGui::Text("Player Hair ID: %X", cheat::ReadDoublePointer(CurrentPlayerModelParts, 0x4));
 					ImGui::SameLine();
@@ -332,10 +374,10 @@ void gui::RenderGUI() noexcept
 					ImGui::Text("Player Weapon ID: %X", cheat::ReadDoublePointer(shared::base+0x17E9FF4, 0x0));
 					
 
-					ImGui::Value("Player Current Action",player->m_nCurrentAction);
+					ImGui::Text("Player Current Action %X",player->m_nCurrentAction);
 					ImGui::SameLine();
 				//	if (!LoopPlayerAction)
-					ImGui::InputScalar("Set action", ImGuiDataType_S32,  &player->m_nCurrentAction);
+					ImGui::InputScalar("Set Player Action", ImGuiDataType_U32, &player->m_nCurrentAction, nullptr, nullptr, "%X", 2);
 					/*if (LoopPlayerAction)
 						ImGui::InputScalar("Set action", ImGuiDataType_S32, &PlayerActionForLoop);
 
@@ -350,6 +392,10 @@ void gui::RenderGUI() noexcept
 					ImGui::InputScalar("Set action Id", ImGuiDataType_S32, &player->m_nCurrentActionId);
 				
 					ImGui::Value("Player Current Animation ID", cheat::ReadSinglePointer(player->field_774, 0x14));
+					ImGui::Text("Player Animation Name: %s", cheat::GetAnimationNameById((int**)player->field_75C, cheat::ReadSinglePointer(player->field_774, 0x14)));
+					//ImGui::Text("Player Animation Name addr: %X", cheat::currentAnimationAddr((unsigned int)player->field_75C, cheat::ReadSinglePointer(player->field_774, 0x14)));
+					//ImGui::Text("loadedswitcher: % s", cheat::testStyle);
+					
 					ImGui::Value("Player Max Health", player->m_nMaxHealth);
 					ImGui::Value("Player Current Health", player->m_nHealth);
 
@@ -358,23 +404,36 @@ void gui::RenderGUI() noexcept
 					ImGui::InputScalar("Set Animation For Test", ImGuiDataType_S32, &AnimationForTest);
 					if (ImGui::Button("Call Animation by ID")) {
 						player->FindAnimation(AnimationForTest, 0, 0.2, 1.0, 0x8000000, -1.0, 1.0);
+
 					}
+
+					ImGui::InputScalar("Set Effect ID For Test", ImGuiDataType_S32, &EffectForTest);
+					if (ImGui::Button("Call Effect by ID")) {
+						player->CallEffect(EffectForTest, &player->field_3470);
+					}
+
+
+					auto playerManager = g_pPlayerManagerImplement;
+					ImGui::Value("Player Weapon Type", playerManager->m_nCustomWeaponEquipped);
 
 					ImGui::Separator();
 					Entity* targetEnemyEntity = *(Entity**)(shared::base + 0x19BFF60);
 					if (targetEnemyEntity) {
 						BehaviorEmBase* targetEnemy = (BehaviorEmBase*)targetEnemyEntity->m_pInstance;
 						
-						ImGui::Value("Boss Current Action", targetEnemy->m_nCurrentAction);
+						//if (player->m_nCurrentAction == 0x10001C) targetEnemy->RageCall(20);
+
+						ImGui::Text("Boss Current Action %X", (unsigned int)targetEnemy->m_nCurrentAction);
 						ImGui::SameLine();
-						
-						ImGui::InputScalar("Set Boss Action", ImGuiDataType_S32, &targetEnemy->m_nCurrentAction);
+						ImGui::InputScalar("Set Boss Action", ImGuiDataType_U32, &targetEnemy->m_nCurrentAction, nullptr, nullptr, "%X",2);
 						
 						ImGui::Value("Boss Current Action ID", targetEnemy->m_nCurrentActionId);
 						ImGui::SameLine();
 						ImGui::InputScalar("Set Boss Action Id", ImGuiDataType_S32, &targetEnemy->m_nCurrentActionId);
 						
 						ImGui::Value("Boss Current Animation ID", cheat::ReadSinglePointer(targetEnemy->field_774, 0x14));
+						ImGui::Text("Boss Animation Name: %s", cheat::GetAnimationNameById((int**)targetEnemy->field_75C, cheat::ReadSinglePointer(targetEnemy->field_774, 0x14)));
+
 						ImGui::Value("Boss Max Health", targetEnemy->m_nMaxHealth);
 						
 						ImGui::Value("Boss Current Health", targetEnemy->m_nHealth);
@@ -397,6 +456,7 @@ void gui::RenderGUI() noexcept
 					KeyBind::Hotkey("Time Stop hotkey: ", &cheat::timeStopHotkey);
 
 				ImGui::Checkbox("Change Players", &cheat::PlayerIsSam);
+				ImGui::Checkbox("Sam Instant Charges", &cheat::EnableInstantCharges);
 
 				ImGui::EndTabItem();
 			}
@@ -507,12 +567,19 @@ void gui::RenderGUI() noexcept
 				/*************************** SUBPHASE SELECT END***************************/
 
 
+
+
 				/*************************** FUNCTIONS FOR SELECT ***************************/
 				ImGui::Checkbox("Is DLC Phase (for Sam and Wolf only!)", &isDLCPhase);
 
 				if (ImGui::Button("Change mission")) {
 					cheat::ChangeMission(std::strtoul(selectedPhaseId, nullptr, 16), selectedPhaseName, isDLCPhase);
 				}
+
+
+
+
+
 
 				ImGui::EndTabItem();
 			}
